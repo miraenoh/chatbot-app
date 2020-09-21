@@ -1,7 +1,11 @@
+import React, { useEffect } from 'react'
 import Axios from 'axios'
-import React from 'react'
 
 function Chatbot() {
+    // Trigger the welcome event once the app starts
+    useEffect(() => {
+        eventQuery('Welcome')
+    }, [])
 
     const textQuery = async (inputText) => {
         let conversations = []
@@ -42,6 +46,40 @@ function Chatbot() {
             }
             conversations.push(conversation)
         }
+
+        // Process the message Chatbot sent
+    }
+
+    const eventQuery = async (inputEvent) => {
+        let conversations = []
+
+        // Process the input event
+        const eventQueryVariables = {
+            event: inputEvent
+        }
+
+        // Send a request to the textQuery ROUTE
+        try {
+            const res = await Axios.post('/api/dialogflow/eventQuery', eventQueryVariables)
+            const resContent = res.data.fulfillmentMessages[0]
+            let conversation = {
+                who: 'bot',
+                content: resContent
+            }
+            conversations.push(conversation)
+            console.log(conversation)
+        } catch (err) {
+            let conversation = {
+                who: 'bot',
+                content: {
+                    text: {
+                        text: "Error just occured, please check the problem"
+                    }
+                }
+            }
+            conversations.push(conversation)
+        }
+
         // Process the message Chatbot sent
     }
 
