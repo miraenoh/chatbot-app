@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 import Axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
 import { saveMessage } from '../_actions/message_actions'
@@ -10,11 +10,19 @@ import MyCard from './Sections/Card'
 function Chatbot() {
     const dispatch = useDispatch()
     const messages = useSelector(state => state.message.messages)
+    const messageEndRef = useRef(null);
 
     // Trigger the welcome event once the app starts
     useEffect(() => {
         eventQuery('Welcome')
     }, [])
+
+    // Detect for automatic scrolling
+    useEffect(() => {
+        if (messageEndRef.current) {
+            messageEndRef.current.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' })
+        }
+    })
 
     const textQuery = async (inputText) => {
         // Process the message the user sent
@@ -142,6 +150,7 @@ function Chatbot() {
         }}>
             <div style={{ height: 644, width: '100%', overflow: 'auto' }}>
                 {renderMessages(messages)}
+                <div ref={messageEndRef} />
             </div>
             <input
                 style={{
