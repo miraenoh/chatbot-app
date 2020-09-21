@@ -1,6 +1,49 @@
+import Axios from 'axios'
 import React from 'react'
 
 function Chatbot() {
+
+    const textQuery = async (inputText) => {
+        let conversations = []
+
+        // Process the message the user sent
+        let conversation = {
+            who: 'user',
+            content: {
+                text: {
+                    text: inputText
+                }
+            }
+        }
+        conversations.push(conversation)
+
+        const textQueryVariables = {
+            text: inputText
+        }
+
+        // Send a request to the textQuery ROUTE
+        try {
+            const res = await Axios.post('/api/dialogflow/textQuery', textQueryVariables)
+            const resContent = res.data.fulfillmentMessages[0]
+            conversation = {
+                who: 'bot',
+                content: resContent
+            }
+            conversations.push(conversation)
+            console.log(conversation)
+        } catch (err) {
+            conversation = {
+                who: 'bot',
+                content: {
+                    text: {
+                        text: "Error just occured, please check the problem"
+                    }
+                }
+            }
+            conversations.push(conversation)
+        }
+        // Process the message Chatbot sent
+    }
 
     const keyPressHandler = (e) => {
         if (e.key === 'Enter') {
@@ -9,7 +52,7 @@ function Chatbot() {
             }
 
             // Send a request to the text query route
-            // textQuery(e.target.value)
+            textQuery(e.target.value)
 
             e.target.value = "";
         }
@@ -20,8 +63,7 @@ function Chatbot() {
             height: 700, width: 700,
             border: '3px solid black', borderRadius: '7px'
         }}>
-            <div style={{ height: 644, width: '100%', overflow: 'auto' }}>
-
+            <div style={{ height: 644, width: '100%', overflow: 'auto' }}>       
             </div>
             <input
                 style={{
