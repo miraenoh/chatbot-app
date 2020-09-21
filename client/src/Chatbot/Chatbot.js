@@ -2,9 +2,14 @@ import React, { useEffect } from 'react'
 import Axios from 'axios'
 import { useDispatch, useSelector } from 'react-redux'
 import { saveMessage } from '../_actions/message_actions'
+import { List, Icon, Avatar } from 'antd'
+
+import Message from './Sections/Message'
+import MyCard from './Sections/Card'
 
 function Chatbot() {
     const dispatch = useDispatch()
+    const messages = useSelector(state => state.message.messages)
 
     // Trigger the welcome event once the app starts
     useEffect(() => {
@@ -12,8 +17,6 @@ function Chatbot() {
     }, [])
 
     const textQuery = async (inputText) => {
-        let conversations = []
-
         // Process the message the user sent
         let conversation = {
             who: 'user',
@@ -32,12 +35,13 @@ function Chatbot() {
         // Send a request to the textQuery ROUTE
         try {
             const res = await Axios.post('/api/dialogflow/textQuery', textQueryVariables)
-            const resContent = res.data.fulfillmentMessages[0]
-            conversation = {
-                who: 'bot',
-                content: resContent
+            for (let resContent of res.data.fulfillmentMessages) {
+                conversation = {
+                    who: 'bot',
+                    content: resContent
+                }
+                dispatch(saveMessage(conversation))
             }
-            dispatch(saveMessage(conversation))
         } catch (err) {
             conversation = {
                 who: 'bot',
@@ -54,8 +58,6 @@ function Chatbot() {
     }
 
     const eventQuery = async (inputEvent) => {
-        let conversations = []
-
         // Process the input event
         const eventQueryVariables = {
             event: inputEvent
@@ -64,12 +66,13 @@ function Chatbot() {
         // Send a request to the textQuery ROUTE
         try {
             const res = await Axios.post('/api/dialogflow/eventQuery', eventQueryVariables)
-            const resContent = res.data.fulfillmentMessages[0]
-            let conversation = {
-                who: 'bot',
-                content: resContent
+            for (let resContent of res.data.fulfillmentMessages) {
+                let conversation = {
+                    who: 'bot',
+                    content: resContent
+                }
+                dispatch(saveMessage(conversation))
             }
-            dispatch(saveMessage(conversation))
         } catch (err) {
             let conversation = {
                 who: 'bot',
@@ -98,12 +101,47 @@ function Chatbot() {
         }
     }
 
+    const renderCards = (cards) => {
+        return cards.map((card, i) => <MyCard kay={i} cardInfo={card.structValue} />)
+    }
+
+    const renderOneMessage = (message, i) => {
+        if (message.content && message.content.text && message.content.text.text) {
+            // Template for normal text
+            return <Message key={i} who={message.who} text={message.content.text.text} />
+        } else if (message.content && message.content.payload && message.content.payload.fields.card) {
+            // Template for card message
+            const AvatarSrc = message.who === 'bot' ? <Icon type="robot" /> : <Icon type="smile" />
+
+            return <div>
+                <List.Item style={{ padding: '1rem' }}>
+                    <List.Item.Meta
+                        avatar={<Avatar icon={AvatarSrc} />}
+                        title={message.who}
+                        description={renderCards(message.content.payload.fields.card.listValue.values)}
+                    />
+                </List.Item>
+            </div>
+        }
+    }
+
+    const renderMessages = (messages) => {
+        if (messages) {
+            return messages.map((message, i) => {
+                return renderOneMessage(message, i)
+            })
+        } else {
+            return null
+        }
+    }
+
     return (
         <div style={{
             height: 700, width: 700,
             border: '3px solid black', borderRadius: '7px'
         }}>
-            <div style={{ height: 644, width: '100%', overflow: 'auto' }}>       
+            <div style={{ height: 644, width: '100%', overflow: 'auto' }}>
+                {renderMessages(messages)}
             </div>
             <input
                 style={{
